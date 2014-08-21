@@ -1,0 +1,792 @@
+
+<html>
+<head>
+<script type="text/javascript" src="makebst.js"></script>
+<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>-->
+</head>
+
+<body>
+
+<h1>makebst</h1>
+
+<!-- to skip the preamble, always generate the following
+Do you want a description of the usage? [n]
+Enter the name of the master file (default=merlin.mbs)
+Name of the final output .bst file? (default extension=bst)
+Give a comment line to include in the style file. []
+Do you want verbose comments? (NO)
+Name of language definition file (default=merlin.mbs)
+Include file(s) for extra journal names? (NO)
+
+Internal language support (if no external language file)
+(*) english words used explicitly
+(b) babel (words replaced by commands defined in babelbst.tex)
+-->
+
+<div>
+	<button type="button" id="btn">Preview</button>
+	<button type="button" id="download">Download .bst</button>
+	<br>
+	<p id="output"><!--<img src="example1.png">--></p>
+</div>
+
+<div></div>
+
+<!--<form id="bstoptions" action="makebst.php" method="post">-->
+<form id="bstoptions" method="post">
+Style of citations
+<select name="citationStyle" id="citationStyle" onchange='hideOnStyle(this.value)';>
+<option value="*" selected>Numerical as in standard LaTeX</option>
+<option value="a">Author-year with some non-standard interface</option>
+<option value="b">Alpha style, jon90 or jwb90 for single or multiple authors</option>
+<option value="o">Alpha style, jon90 even for multiple authors</option>
+<option value="f">Alpha style, jones90 (full name of first author)</option>
+<option value="c">Cite key (special for listing contents of bib file)</option>
+</select><br/>
+
+HTML output (if not author-year citations)
+<select name="htmlOutput" id="htmlOutput">
+<option value="*" selected>Normal LaTeX output</option>
+<option value="h">Hypertext output, in HTML code, in paragraphs</option>
+<option value="n">Hypertext list with sequence numbers</option>
+<option value="k">Hypertext with keys for viewing databases</option>
+</select><br/>
+
+Author-year support system (author-year citations only)
+<select name="authorYearSystem" id="authorYearSystem">
+<option value="*" selected>Natbib for use with natbib v5.3 or later</option>
+<option value="o">Older natbib without full authors citations</option>
+<option value="l">Apalike for use with apalike.sty</option>
+<option value="h">Harvard system with harvard.sty</option>
+<option value="a">Astronomy system with astron.sty</option>
+<option value="c">Chicago system with chicago.sty</option>
+<option value="n">Named system with named.sty</option>
+<option value="d">Author-date system with authordate1-4.sty</option>
+</select><br/>
+
+
+Language field
+<select name="languageField" id="languageField">
+<option value="*" selected>No language field </option>
+<option value="l">Add language field to switch hyphenation patterns temporarily</option>
+</select><br/>
+
+Annotations
+<select name="annotations" id="annotations">
+<option value="*" selected>No annotations will be recognized</option>
+<option value="a">Annotations in annote field or in .tex file of citekey name</option>
+</select><br/>
+
+Presentations
+<select name="presentations" id="presentations">
+<option value="*" selected>Do not add presentation type for conference talks</option>
+<option value="p">Add presentation, speaker not highlighted </option>
+<option value="b">Presentation, speaker bold face </option>
+<option value="i">Presentaion, speaker italic </option>
+<option value="c">Presentaion, speaker in small caps </option>
+</select><br/>
+
+<!-- ordering of references (if author-year citations) -->
+Ordering of references
+<select name="orderingOfRefs" id="orderingOfRefs" onchange='hideOnOrdering(this.value)';>
+	<option value="*" selected>Alphabetical by all authors</option>
+	<option value="c">Citation order (unsorted)</option>
+	<option value="d">Year ordered and then by authors</option>
+	<option value="r">Reverse year ordered and then by authors</option>
+	<!-- for author-year citations only -->
+	<option value="l">By label (Jones before jones and james before jones et al)</option>
+	<option value="m">By label and cite order (like above but all jones et al ordered as cited)</option>
+	<option value="k">By label and cite key instead of label and title, as above</option>
+	<!-- -->
+</select><br/>
+
+<h2>Author names</h2>
+
+Order on von part (if not citation order)
+<select name="orderOnVonPart" id="orderOnVonPart">
+<option value="*" selected>Sort on von part (de la maire before defoe)</option>
+<option value="x">Sort without von part (de la maire after mahone)</option>
+</select><br/>
+
+Ignore first names (if author-year citations)
+<select name="ignoreFirstNames" id="ignoreFirstNames">
+<option value="*" selected>Respect first names or initials, treat as different authors</option>
+<option value="x">Sort on surname only and treat all smiths as one</option>
+</select><br/>
+
+Author names
+<select name="authorNames" id="authorNames" onchange="hideOnAuthorNames(this.value)">
+<option value="*" selected>Full, surname last (John frederick smith)</option>
+<option value="f">Full, surname first (Smith, john frederick)</option>
+<option value="i">Initials + surname (J. f. smith)</option>
+<option value="r">Surname + initials (Smith, j. f.)</option>
+<option value="s">Surname + dotless initials (Smith j f)</option>
+<option value="w">Surname + comma + spaceless initials (Smith, j.F.)</option>
+<option value="x">Surname + pure initials (Smith jf)</option>
+<option value="y">Surname + comma + pure initials (Smith, jf)</option>
+<option value="z">Surname + spaceless initials (Smith j.F.)</option>
+<option value="a">Only first name reversed, initials (AGU style: smith, j. f., h. k. jones)</option>
+<option value="b">First name reversed, with full names (Smith, john fred, harry kab jones)</option>
+</select><br/>
+
+
+
+Editor names in collections (if author names reversed)
+<select name="editorNamesReversed" id="editorNamesReversed">
+<option value="*"> Editor names NOT reversed as edited by JJ Smith</option>
+<option value="r"> Editor names reversed just like authors'</option>
+</select><br/>
+
+Position of junior (if author names reversed)
+<select name="positionOfJunior" id="positionOfJunior">
+<option value="*"> Junior comes last as Smith, John, Jr.</option>
+<option value="m"> Junior between as Smith, Jr., John</option>
+</select><br/>
+
+
+Junior part in the citation (if author-year citations)
+<select name="juniorPart" id="juniorPart">
+<option value="*" selected>No `junior' part in the citations but in the ref listing</option>
+<option value="j">`Junior' in citations as well as in ref listing</option>
+</select><br/>
+
+Punctuation between author names
+<select name="punctuationBetween" id="punctuationBetween">
+<option value="*" selected>Author names separated by commas </option>
+<option value="s">Names separated by semi-colon </option>
+<option value="h">Names separated by slash /</option>
+</select><br/>
+
+Adjacent references with repeated names
+<select name="adjacentReferences" id="adjacentReferences">
+<option value="*" selected>Author/editor names always present </option>
+<option value="d">Repeated author/editor names replaced by dash </option>
+<option value="2">Repeated author/editor names replaced by 2 dashes </option>
+<option value="3">Repeated author/editor names replaced by 3 dashes </option>
+</select><br/>
+
+<h2>Number of authors</h2>
+
+Number of authors in bibliography
+<select name="numberAuthors" id="numberAuthors" onchange='hideOnNumAuthors(this.value)'>
+<option value="*" selected>All authors included in listing</option>
+<option value="l">Limited authors (et al replaces missing names)</option>
+</select><br/>
+
+Maximum number of authors (1-99)
+<select name="maximumNumberAuthors" id="maximumNumberAuthors" onchange='populateMinimum(this.value)'>
+</select><br/>
+
+Minimum number of authors (1-max)
+<select name="minimumNumberAuthors" id="minimumNumberAuthors">
+</select><br/>
+
+Authors in citations
+<select name="authorIn" id="authorIn" onchange='hideOnAuthorsIn(this.value)'>
+<option value="*" selected>One author et al for three or more authors</option>
+<option value="m">Some other truncation scheme </option>
+</select><br/>
+
+
+Max authors before et al:
+<select name="maxAuthorsBefore" id="maxAuthorsBefore">
+<option name="*" id="*"> One et al</option>
+<option name="2" id="2"> One, Two et al</option>
+<option name="3" id="3"> One, Two, Three et al</option>
+<option name="4" id="4"> One, Two, Three, Four et al</option>
+<option name="5" id="5"> One, Two, Three, Four, Five et al</option>
+<option name="6" id="6"> One, Two, Three, Four, Five, Six et al</option>
+<option name="7" id="7"> One, Two, Three, Four, Five, Six, Seven et al</option>
+</select><br/>
+
+
+Max authors without et al:
+<select name="maxAuthorsWithout" id="maxAuthorsWithout">
+<option name="*" id="*"> Two authors without truncating </option>
+<option name="3" id="3"> Three authors without truncating</option>
+<option name="4" id="4"> Four authors without truncating</option>
+<option name="5" id="5"> Five authors without truncating</option>
+<option name="6" id="6"> Six authors without truncating</option>
+</select><br/>
+
+
+<h2>Fonts</h2>
+
+Typeface for authors in list of references
+<select name="typefaceAuthors" id="typefaceAuthors" onchange='hideOnFontForAuthors(this.value)'>
+<option value="*" selected>Normal font for author names </option>
+<option value="s">Small caps authors (\sc)</option>
+<option value="i">Italic authors (\it or \em)</option>
+<option value="b">Bold authors (\bf)</option>
+<option value="u">User defined author font (\bibnamefont)</option>
+</select><br/>
+
+
+Font of citation labels in text (if author-year citations)
+<select name="fontCitationLabels" id="fontCitationLabels">
+<option value="*" selected>Cited authors plain as result of \cite command</option>
+<option value="i">Cited authors italic </option>
+<option value="s">Cited authors small caps </option>
+<option value="b">Cited authors bold </option>
+<option value="u">User defined citation font (\citenamefont)</option>
+</select><br/>
+
+
+<!-- FONT FOR FIRST NAMES (if non-default font for authors) -->
+Font for first names
+<select name="fontFirstNames" id="fontFirstNames">
+<option value="*"> First names same font as surnames</option>
+<option value="r"> First names in normal font</option>
+<option value="u"> First names in user defined font (\bibfnamefont)</option>
+</select><br/>
+
+
+<!--EDITOR NAMES IN INCOLLECTION ETC:-->
+Editor names in incollection etc
+<select name="editorNames" id="editorNames">
+<option value="*"> Editors incollection normal font</option>
+<option value="a"> Editors incollection like authors font</option>
+</select><br/>
+
+<!--FONT FOR `AND' IN LIST:-->
+Font for `and' in list
+<select name="fontForAnd" id="fontForAnd">
+<option value="*"> `And' in author font (JONES AND JAMES)</option>
+<option value="r"> `And' in normal font (JONES and JAMES)</option>
+</select><br/>
+
+
+Font of extra label (The extra letter on the year)
+<select name="fontExtraLabel" id="fontExtraLabel">
+<option value="*" selected>Extra label plain </option>
+<option value="i">Extra label italic </option>
+</select><br/>
+
+Label when authors missing (if author-year citations)
+<select name="labelWhenMissing" id="labelWhenMissing">
+<option value="*" selected>Year blank when key replaces missing author (for natbib 7.0)</option>
+<option value="y">Year included when key replaces missing author </option>
+</select><br/>
+
+
+<h2>Dates</h2>
+
+Missing date (if author-year citations)
+<select name="missingDate" id="missingDate">
+<option value="*" selected>Missing date set to ???? in label and text</option>
+<option value="b">Missing date left blank </option>
+</select><br/>
+
+Date position
+<select name="datePosition" id="datePosition" onchange="hideOnDatePosition(this.value)">
+<option value="*" selected>Date at end </option>
+<option value="b">Date after authors </option>
+<option value="j">Date part of journal spec. (as 1994;45:34-40) else at end</option>
+<option value="e">Date at very end after any notes</option>
+</select><br/>
+
+Date format
+<select name="dateFormat" id="dateFormat">
+<!--<optgroup label="Author-year citations">
+	<option value="*" selected>Year plain without any brackets</option>
+	<option value="p">Year in parentheses as (1993)</option>
+	<option value="b">Year in brackets as [1993]</option>
+	<option value="c">Year preceded by colon as `: 1993'</option>
+	<option value="d">Year preceded by period as `. 1993'</option>
+	<option value="m">Date preceded by comma as `, 1993'</option>
+	<option value="s">Year preceded by space only, as ` 1993'</option>
+</optgroup>
+<optgroup label="Non author-year citations">-->
+	<option value="*" selected>Plain month and year without any brackets</option>
+	<option value="p">Date in parentheses as (May 1993)</option>
+	<option value="b">Date in brackets as [May 1993]</option>
+	<option value="c">Date preceded by colon as `: may 1993'</option>
+	<option value="d">Date preceded by period as `. may 1993'</option>
+	<option value="m">Date preceded by comma as `, may 1993'</option>
+	<option value="s">Date preceded by space only, as ` may 1993'</option>
+<!--</optgroup>-->
+</select><br/>
+
+
+
+Include months (author-year)
+<select name="includeMonths" id="includeMonths" onchange='hideOnIncludeMonths(this.value)';>
+<option value="*" selected>Date is year only without the month</option>
+<option value="m">Include month in date </option>
+</select><br/>
+
+Suppress month (non author-year):
+<select name="suppressMonth" id="suppressMonth">
+<option value="*" selected>Date is month and year </option>
+<option value="x">Date is year only </option>
+</select><br/>
+
+
+Reversed date (if including month)
+<select name="reversedDate" id="reversedDate">
+<option value="*" selected>Date as month year</option>
+<option value="r">Date as year month </option>
+</select><br/>
+
+
+<!--DATE PUNCTUATION (if date not at end)-->
+Date punctuation (if date not at end)
+<select name="datePunctuation" id="datePunctuation">
+<option value="*"> Date with standard block punctuation (comma or period)</option>
+<option value="c"> Colon after date as 1994:</option>
+<option value="s"> Semi-colon after date as 1994;</option>
+<option value="p"> Period after date even when blocks use commas</option>
+<option value="x"> No punct. after date</option>
+</select><br/>
+
+
+<!--BLANK AFTER DATE:-->
+Blank after date
+<select name="blankAfterDate" id="blankAfterDate">
+<option value="*"> Space after date and punctuation</option>
+<option value="x"> No space after date as 1994:45</option>
+</select><br/>
+
+
+Date font
+<select name="dateFont" id="dateFont">
+<option value="*" selected>Date in normal font </option>
+<option value="b">Date in bold face </option>
+</select><br/>
+
+Truncate year (if author-year citations)
+<select name="truncateYear" id="truncateYear">
+<option value="*" selected>Year text full as 1990--1993 or `in press'</option>
+<option value="t">Year truncated to last 4 digits</option>
+</select><br/>
+
+<h2>Article titles</h2>
+
+Title of article
+<select name="titleArticle" id="titleArticle">
+<option value="*" selected>Title plain with no special font</option>
+<option value="i">Title italic (\em)</option>
+<option value="q">Title and punctuation in single quotes (`Title,' ..)</option>
+<option value="d">Title and punctuation in double quotes (``Title,'' ..)</option>
+<option value="g">Title and punctuation in guillemets (Title, ..)</option>
+<option value="x">Title in single quotes (`Title', ..)</option>
+<option value="y">Title in double quotes (``Title'', ..)</option>
+<option value="z">Title in guillemets (Title, ..)</option>
+</select><br/>
+
+Capitalization of article title
+<select name="capitalizationTitle" id="capitalizationTitle">
+<option value="*" selected>Sentence style (capitalize first word and those in braces)</option>
+<option value="t">Title style (just as in bib entry)</option>
+</select><br/>
+
+
+Article title present
+<select name="titlePresent" id="titlePresent">
+<option value="*" selected>Article title present in journals and proceedings</option>
+<option value="x">No article title </option>
+</select><br/>
+
+
+<h2>Source name, volume, number</h2>
+
+Journal names
+<select name="journalNames" id="journalNames">
+<option value="*" selected>Periods in journal names are retained, as `Phys. rev.'</option>
+<option value="x">Dotless journal names as `Phys rev'</option>
+</select><br/>
+
+
+Journal name font
+<select name="journalNameFont" id="journalNameFont">
+<option value="*" selected>Journal name italics </option>
+<option value="r">Journal name normal font</option>
+</select><br/>
+
+
+Thesis title
+<select name="thesisTitle" id="thesisTitle">
+<option value="*" selected>Thesis titles like books </option>
+<option value="a">Thesis title like article </option>
+<option value="x">No thesis title </option>
+</select><br/>
+
+
+Technical report title
+<select name="technicalReportTitle" id="technicalReportTitle">
+<option value="*" selected>Tech. report title like articles </option>
+<option value="b">Tech. report title like books </option>
+</select><br/>
+
+Technical report number
+<select name="technicalReportNumber" id="technicalReportNumber">
+<option value="*" selected>Tech. report and number plain as `Tech. rep. 123'</option>
+<option value="i">Tech. report and number italic as `{\it tech. rep. 123'}</option>
+</select><br/>
+
+Journal volume
+<select name="journalVolume" id="journalVolume">
+<option value="*" selected>Volume plain as vol(num)</option>
+<option value="i">Volume italic as {\em vol}(num)</option>
+<option value="b">Volume bold as {\bf vol}(num)</option>
+<option value="d">Volume and number bold as {\bf vol(num)}</option>
+</select><br/>
+
+Journal vol and number
+<select name="journalVolAndNumber" id="journalVolAndNumber">
+<option value="*" selected>Journal vol(num) as 34(2)</option>
+<option value="s">Journal vol (num) as 34 (2)</option>
+<option value="c">Journal vol, num as 34, 2</option>
+<option value="n">Journal vol, no. num as 34, no. 2</option>
+<option value="h">Journal vol, \# number as 34, \#2</option>
+<option value="b">Journal vol number as 34 2</option>
+<option value="x">Journal vol, without number as 34</option>
+</select><br/>
+
+Volume punctuation
+<select name="volumePunctuation" id="volumePunctuation">
+<option value="*" selected>Volume with colon as vol(num):ppp</option>
+<option value="s">Volume with colon and space as vol(num): ppp</option>
+<option value="h">Volume with semi-colon as vol(num); ppp</option>
+<option value="c">Volume with comma as vol(num), ppp</option>
+<option value="b">Volume with blank as vol(num) ppp</option>
+</select><br/>
+
+Year in journal specification
+<select name="yearJournalSpec" id="yearJournalSpec">
+<option value="*" selected>Journal year like others as given by date position</option>
+<option value="v">Journal vol(year) as 34(1995)</option>
+<option value="s">Journal vol (year) as 34 (1995)</option>
+<option value="p">Year with pages as 34(2), (1995) 1345--1387</option>
+<option value="c">Year, comma, pages as 34(2), (1995), 1345--1387</option>
+</select><br/>
+
+
+<h2>Page numbering</h2>
+
+Page numbers
+<select name="pageNumbers" id="pageNumbers">
+<option value="*" selected>Start and stop page numbers given</option>
+<option value="f">Only start page number </option>
+</select><br/>
+
+Large page numbers
+<select name="largePageNumbers" id="largePageNumbers">
+<option value="*" selected>No separators for large page numbers </option>
+<option value="c">Comma inserted over 9999 as 11,234</option>
+<option value="s">Thin space inserted over 9999 as 11 234</option>
+<option value="p">Period inserted over 9999 as 11.234</option>
+</select><br/>
+
+Word `page' in articles
+<select name="wordPageIn" id="wordPageIn">
+<option value="*" selected>Article pages numbers only as 234-256</option>
+<option value="p">Include `page' in articles as pp. 234--256</option>
+</select><br/>
+
+Position of pages
+<select name="positionPages" id="positionPages">
+<option value="*" selected>Pages given mid text as is normal</option>
+<option value="e">Pages at end but before any notes</option>
+</select><br/>
+
+
+<h2>Volume, series numbering</h2>
+
+Word `volume' in articles
+<select name="wordVolumeIn" id="wordVolumeIn">
+<option value="*" selected>Article volume as number only as 21</option>
+<option value="p">Include `volume' in articles as vol. 21</option>
+</select><br/>
+
+Number and series for collections
+<select name="numberAndSeriesCollections" id="numberAndSeriesCollections">
+<option value="*" selected>Allows number without series and suppresses word "number"</option>
+<option value="s">Standard bibTeX as: "number 123 in total works"; error if number and no series</option>
+</select><br/>
+
+Position of number and series
+<select name="positionNumberSeries" id="positionNumberSeries">
+<option value="*" selected>After chapter and pages as in standard bibTeX</option>
+<option value="t">Just before publisher or organization</option>
+</select><br/>
+
+Volume and series for books/collections
+<select name="volumeSeriesBooksCollections" id="volumeSeriesBooksCollections">
+<option value="*" selected>Vol. 23 of series as in standard bibTeX</option>
+<option value="s">Series, vol. 23 </option>
+</select><br/>
+
+Position of volume and series for incollections
+<select name="positionVolumeSeriesIncollections" id="positionVolumeSeriesIncollections">
+<option value="*" selected>Series and volume after the editors </option>
+<option value="e">Series and volume after booktitle and before editors</option>
+</select><br/>
+
+
+<h2>Misc.</h2>
+
+Journal name punctuation
+<select name="journalNamePunctuation" id="journalNamePunctuation">
+<option value="*" selected>Comma after journal name</option>
+<option value="x">Space after journal name</option>
+</select><br/>
+
+Book title
+<select name="bookTitle" id="bookTitle">
+<option value="*" selected>Book title italic (\em)</option>
+<option value="p">Book title plain (no font command)</option>
+</select><br/>
+
+Pages in books
+<select name="pagesInBooks" id="pagesInBooks">
+<option value="*" selected>Pages in book plain as pp. 50-55</option>
+<option value="p">Pages in book in parentheses as (pp. 50-55)</option>
+<option value="x">Pages in book bare as 50-55</option>
+</select><br/>
+
+Total pages of a book
+<select name="totalPagesBook" id="totalPagesBook">
+<option value="*" selected>Total book pages not printed </option>
+<option value="p">For book: 345 pages or pp.</option>
+<option value="a">Total book pages before publisher </option>
+</select><br/>
+
+
+<h2>Publisher</h2>
+
+Publisher address
+<select name="publisherAddress" id="publisherAddress">
+<option value="*" selected>Publisher, address as harcourt, new york</option>
+<option value="a">Address: publisher as new york: harcourt</option>
+</select><br/>
+
+Publisher in parentheses
+<select name="publisherParentheses" id="publisherParentheses">
+<option value="*" selected>Publisher as normal block without parentheses</option>
+<option value="p">Publisher in parentheses </option>
+<option value="d">Publisher and date in parentheses (Oxford, 1994)</option>
+<option value="c">Publisher and date in parentheses, no comma (Oxford 1994)</option>
+<option value="f">Publisher and date without parentheses oxford, 1994</option>
+<option value="k">Publisher and date, no parentheses, no comma oxford 1994</option>
+</select><br/>
+
+Publisher position
+<select name="publisherPosition" id="publisherPosition">
+<option value="*" selected>Publisher after chapter, pages </option>
+<option value="p">Publisher before chapter, pages </option>
+<option value="e">Publisher after edition </option>
+</select><br/>
+
+
+<h2>Archive info</h2>
+
+ISBN number
+<select name="isbn" id="isbn">
+<option value="*" selected>Include ISBN for books, booklets, etc.</option>
+<option value="x">No ISBN </option>
+</select><br/>
+
+ISSN number
+<select name="issn" id="issn">
+<option value="*" selected>Include ISSN for periodicals</option>
+<option value="x">No ISSN </option>
+</select><br/>
+
+DOI number
+<select name="doi" id="doi">
+<option value="*" selected>Include DOI as "DOI: number"</option>
+<option value="u">Format DOI as URL //dx.doi.org/doi (must give URL options!)</option>
+<option value="a">Insert DOI AGU style as part of page number</option>
+<option value="x">No DOI</option>
+</select><br/>
+
+
+<h2>Editor</h2>
+
+`Editor' after names (edited books without authors)
+<select name="editorAfterNames" id="editorAfterNames">
+<option value="*" selected>Word `editor' after name </option>
+<option value="a">`Name (editor),' in parentheses, after name, comma after</option>
+<option value="b">`Name (Editor),' as above, editor upper case</option>
+<option value="c">`Name, (editor)' in parentheses, after name, comma between</option>
+<option value="d">`Name, (Editor)' as above, editor upper case</option>
+<option value="e">`Name (editor)' in parentheses, after name, no commas</option>
+<option value="f">`Name (Editor)' as above, editor upper case</option>
+</select><br/>
+
+Editor in collections
+<select name="editorInCollections" id="editorInCollections">
+<option value="*" selected>Same as for edited book (names before booktitle)</option>
+<option value="b">In booktitle, edited by ..  (where .. is names)</option>
+<option value="p">In booktitle (edited by ..) </option>
+<option value="c">In booktitle, (edited by ..) </option>
+<option value="e">In booktitle, editor .. </option>
+<option value="f">In booktitle, (editor) .. </option>
+<option value="k">In booktitle (editor..) </option>
+<option value="g">In booktitle, (editor..) </option>
+<option value="j">In booktitle, .., editor </option>
+<option value="m">In booktitle (.., editor) </option>
+</select><br/>
+
+
+<h2>Punctuation and abbreviation</h2>
+
+Punctuation between sections (blocks)
+<select name="punctuationBetweenSections" id="punctuationBetweenSections">
+<option value="*" selected>\newblock after blocks (periods or new lines with openbib option)</option>
+<option value="c">Comma between blocks </option>
+<option value="s">Semi-colon between blocks </option>
+<option value="b">Blanks between blocks </option>
+<option value="t">Period after titles of articles, books, etc else commas</option>
+<option value="u">Colon after titles of articles, books, etc else commas</option>
+<option value="a">Period after titles of articles else commas</option>
+<option value="d">Colon after titles of articles else commas</option>
+</select><br/>
+
+Punctuation after authors
+<select name="punctuationAfterAuthors" id="punctuationAfterAuthors">
+<option value="*" selected>Author block normal with regular block punctuation</option>
+<option value="c">Author block with colon </option>
+</select><br/>
+
+Punctuation after `in'
+<select name="punctuationAfterIn" id="punctuationAfterIn">
+<option value="*" selected>Space after `in' for incollection or inproceedings</option>
+<option value="c">Colon after `in' (as `In: ...')</option>
+<option value="i">Italic `in' and space</option>
+<option value="d">Italic `in' and colon </option>
+<option value="x">No word `in' for edited works</option>
+</select><br/>
+
+`In' with journal names (if using 'in' with collections)
+<select name="inWithJournalNames" id="inWithJournalNames">
+<option value="*" selected>No `in' before journal name </option>
+<option value="i">Add `in' before journal name in style for incollection</option>
+</select><br/>
+
+Final punctuation
+<select name="finalPunctuation" id="finalPunctuation">
+<option value="*" selected>Period at very end of the listed reference</option>
+<option value="x">No period at end </option>
+</select><br/>
+
+Abbreviate word `pages' (if not using external language file)
+<select name="abbreviateWordPages" id="abbreviateWordPages">
+<option value="*" selected>`Page(s)' (no abbreviation)</option>
+<option value="a">`Page' abbreviated as p. or pp.</option>
+<option value="x">`Page' omitted </option>
+</select><br/>
+
+Abbreviate word `editors'
+<select name="abbreviateWordEditors" id="abbreviateWordEditors">
+<option value="*" selected>`Editor(s)' (no abbreviation)</option>
+<option value="a">`Editor' abbreviated as ed. or eds.</option>
+</select><br/>
+
+Other abbreviations
+<select name="otherAbbreviations" id="otherAbbreviations">
+<option value="*" selected>No abbreviations of volume, edition, chapter, etc</option>
+<option value="a">Abbreviations of such words</option>
+</select><br/>
+
+Edition numbers
+<select name="editionNumbers" id="editionNumbers">
+<option value="*" selected>Editions as in database saving much processing memory</option>
+<option value="w">Write out editions as first, second, third, etc</option>
+<option value="n">Numerical editions as 1st, 2nd, 3rd, etc</option>
+</select><br/>
+
+Stored journal names
+<select name="storedJournalNames" id="storedJournalNames">
+<option value="*" selected>Full journal names for prestored journals</option>
+<option value="a">Abbreviated journal names </option>
+<option value="s">Abbreviated with astronomy shorthands like apJ and aj</option>
+</select><br/>
+
+Ampersand
+<select name="ampersand" id="ampersand">
+<option value="*" selected>Use word `and' in author lists</option>
+<option value="a">Use ampersand in place of `and'</option>
+<option value="v">Use \BIBand in place of `and'</option>
+</select><br/>
+
+Comma before `and'
+<select name="commaBeforeAnd" id="commaBeforeAnd">
+<option value="*" selected>Comma before `and' as `Tom, dick, and harry'</option>
+<option value="n">No comma before `and' as `Tom, dick and harry'</option>
+<option value="c">Comma even with 2 authors as `Tom, and harry'</option>
+</select><br/>
+
+No `and' in reference list
+<select name="noAndInReferenceList" id="noAndInReferenceList">
+<option value="*" selected>With `and' before last author in reference list</option>
+<option value="x">No `and' as `Tom, dick, harry'</option>
+</select><br/>
+
+Comma before `et al'
+<select name="commaBeforeEtAl" id="commaBeforeEtAl">
+<option value="*" selected>Comma before `et al' in reference list</option>
+<option value="x">No comma before `et al'</option>
+</select><br/>
+
+Font of `et al'
+<select name="fontOfEtAl" id="fontOfEtAl">
+<option value="*" selected>Plain et al </option>
+<option value="i">Italic et al </option>
+<option value="r">Roman et al even when authors something else</option>
+</select><br/>
+
+
+<h2>REVTeX</h2>
+
+Additional REVTeX data fields
+<select name="additionalREVTeX" id="additionalREVTeX" onchange='hideOnREVTeX(this.value)';>
+<option value="*" selected>No additional fields for REVTeX</option>
+<option value="r">Include REVTeX data fields collaboration, eid, eprint, archive, numpages, url</option>
+</select><br/>
+
+E-print data field: (without REVTeX fields)
+<select name="eprint" id="eprint">
+<option value="*" selected>Do not include eprint field </option>
+<option value="e">Include eprint and archive fields for electronic publications</option>
+</select><br/>
+
+URL address: (without REVTeX fields)
+<select name="url" id="url">
+<option value="*" selected>No URL for electronic (Internet) documents</option>
+<option value="u">Include URL as regular item block</option>
+<option value="n">URL as note </option>
+<option value="l">URL on new line after rest of reference</option>
+</select><br/>
+
+Reference component tags
+<select name="referenceComponentTags" id="referenceComponentTags">
+<option value="*" selected>No reference component tags in the \bibitem entries</option>
+<option value="b">Reference component tags like \bibinfo in the content of \bibitem</option>
+</select><br/>
+
+
+<h2>Finally!</h2>
+
+Emphasis: (affects all so-called italics)
+<select name="emphasis" id="emphasis">
+<option value="*" selected>Use emphasis ie, \em, allows font switching</option>
+<option value="i">Use true italics ie, \it, absolute italics</option>
+<option value="x">No italics at all</option>
+<option value="u">Underlining in place of italics, best with ulem package</option>
+</select><br/>
+
+Compatibility with plain TeX
+<select name="compatibilityWithPlainTeX" id="compatibilityWithPlainTeX">
+<option value="*" selected>Use LaTeX commands which may not work with plain TeX</option>
+<option value="t">Use only plain TeX commands for fonts and testing</option>
+</select><br/>
+
+<!-- shall i now run this batch job? (NO) -->
+<!--<input type="submit" value="Debug">-->
+
+</form>
+
+</body>
+</html>
